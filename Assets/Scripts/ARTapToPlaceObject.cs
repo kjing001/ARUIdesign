@@ -1,8 +1,10 @@
-﻿using System.Collections;
+﻿// modified from https://github.com/TheUnityWorkbench/tuw-arfoundation-demo
+
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.XR.ARFoundation;
-using System;
 using UnityEngine.XR.ARSubsystems;
 
 public class ARTapToPlaceObject : MonoBehaviour
@@ -14,8 +16,6 @@ public class ARTapToPlaceObject : MonoBehaviour
     private ARRaycastManager arRaycastManager;
     private Pose placementPose;
     private bool placementPoseIsValid = false;
-
-    Vector3 arHitNormal; 
 
     Camera arCamera;
 
@@ -32,15 +32,16 @@ public class ARTapToPlaceObject : MonoBehaviour
         UpdatePlacementPose();
         UpdatePlacementIndicator();
 
-        if (placementPoseIsValid && Input.touchCount > 0 && Input.GetTouch(0).phase == TouchPhase.Began)
-        {
+        if (placementPoseIsValid && Input.touchCount > 0 && Input.GetTouch(0).phase == TouchPhase.Began
+            && !EventSystem.current.IsPointerOverGameObject(Input.touches[0].fingerId))
+        {            
             PlaceObject();
         }
     }
 
     private void PlaceObject()
     {
-        Instantiate(objectToPlace, placementPose.position, placementPose.rotation);
+        Instantiate(objectToPlace, placementPose.position, placementPose.rotation).GetComponent<UIBadge>();
     }
 
     private void UpdatePlacementIndicator()
@@ -49,8 +50,6 @@ public class ARTapToPlaceObject : MonoBehaviour
         {
             placementIndicator.SetActive(true);
             placementIndicator.transform.SetPositionAndRotation(placementPose.position, placementPose.rotation);
-            placementIndicator.transform.forward = -arHitNormal;
-
         }
         else
         {
@@ -72,9 +71,6 @@ public class ARTapToPlaceObject : MonoBehaviour
             var cameraForward = arCamera.transform.forward;
             var cameraBearing = new Vector3(cameraForward.x, 0, cameraForward.z).normalized;
             placementPose.rotation = Quaternion.LookRotation(cameraBearing);
-
-            arHitNormal = hits[0].pose.up;
-
         }
     }
 }
